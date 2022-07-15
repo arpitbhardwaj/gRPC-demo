@@ -29,6 +29,11 @@ public class GreetingServerImpl extends GreetingServiceGrpc.GreetingServiceImplB
         return new StreamObserver<GreetingRequest>() {
             @Override
             public void onNext(GreetingRequest request) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    System.out.println("Exception occurred: " + e.getMessage());
+                }
                 sb.append("Hello ");
                 sb.append(request.getFirstName());
                 sb.append("!\n");
@@ -42,6 +47,31 @@ public class GreetingServerImpl extends GreetingServiceGrpc.GreetingServiceImplB
             @Override
             public void onCompleted() {
                 responseObserver.onNext(GreetingResponse.newBuilder().setResult(sb.toString()).build());
+                responseObserver.onCompleted();
+            }
+        };
+    }
+
+    @Override
+    public StreamObserver<GreetingRequest> greetEveryone(StreamObserver<GreetingResponse> responseObserver) {
+        return new StreamObserver<GreetingRequest>() {
+            @Override
+            public void onNext(GreetingRequest request) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    System.out.println("Exception occurred: " + e.getMessage());
+                }
+                responseObserver.onNext(GreetingResponse.newBuilder().setResult("Hello " + request.getFirstName()).build());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                responseObserver.onError(t);
+            }
+
+            @Override
+            public void onCompleted() {
                 responseObserver.onCompleted();
             }
         };

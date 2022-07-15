@@ -33,6 +33,9 @@ public class GreetingClient {
             case "longGreet":
                 doLongGreet(channel);
                 break;
+            case "greetEveryone":
+                doGreetEveryone(channel);
+                break;
             default:
                 System.out.println("Invalid argument");
         }
@@ -40,8 +43,38 @@ public class GreetingClient {
         channel.shutdown();
     }
 
+    private static void doGreetEveryone(ManagedChannel channel) throws InterruptedException {
+        GreetingServiceGrpc.GreetingServiceStub stub = GreetingServiceGrpc.newStub(channel); //asynchronous
+        List<String> names = new ArrayList<>();
+        CountDownLatch latch = new CountDownLatch(1);
+        Collections.addAll(names, "Arpit", "PK", "Manav");
+
+        StreamObserver<GreetingRequest> stream = stub.greetEveryone(new StreamObserver<GreetingResponse>() {
+            @Override
+            public void onNext(GreetingResponse response) {
+                System.out.println(response.getResult());
+            }
+
+            @Override
+            public void onError(Throwable t) {}
+
+            @Override
+            public void onCompleted() {
+                latch.countDown();
+            }
+        });
+
+        for (String name:
+                names) {
+            stream.onNext(GreetingRequest.newBuilder().setFirstName(name).build());
+        }
+
+        stream.onCompleted();
+        latch.await(10, TimeUnit.SECONDS);
+    }
+
     private static void doLongGreet(ManagedChannel channel) throws InterruptedException {
-        GreetingServiceGrpc.GreetingServiceStub stub = GreetingServiceGrpc.newStub(channel);
+        GreetingServiceGrpc.GreetingServiceStub stub = GreetingServiceGrpc.newStub(channel); //asynchronous
         List<String> names = new ArrayList<>();
         CountDownLatch latch = new CountDownLatch(1);
         Collections.addAll(names, "Arpit", "PK", "Manav");
@@ -53,9 +86,7 @@ public class GreetingClient {
             }
 
             @Override
-            public void onError(Throwable t) {
-
-            }
+            public void onError(Throwable t) {}
 
             @Override
             public void onCompleted() {
@@ -69,7 +100,7 @@ public class GreetingClient {
         }
 
         stream.onCompleted();
-        latch.await(3, TimeUnit.SECONDS);
+        latch.await(10, TimeUnit.SECONDS);
     }
 
     private static void doGreetManyTimes(ManagedChannel channel) {
